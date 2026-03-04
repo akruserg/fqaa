@@ -1,22 +1,22 @@
-# 1. Подготовка папок
-mkdir -p target/linux/ramips/image/
+#!/bin/bash
 
-# 2. Качаем файл
-curl -sSL https://raw.githubusercontent.com/akruserg/fqaa/main/mt76x8.mk > target/linux/ramips/image/keenetic_kn1121.mk
+# 1. Создаем папку для DTS (описание железа), если её нет
+mkdir -p target/linux/ramips/dts/
 
-# 3. Выясняем реальное имя профиля из скачанного файла
-# Ищем строку, которая начинается на 'define Device/'
-REAL_DEVICE_NAME=$(grep "define Device/" target/linux/ramips/image/keenetic_kn1121.mk | head -n 1 | cut -d'/' -f2)
+# 2. Скачиваем файл описания устройства (DTS)
+# ВНИМАНИЕ: Если этот файл не скачается, сборка не увидит KN-1121
+curl -sSL https://raw.githubusercontent.com/akruserg/fqaa/main/mt7628an_keenetic_kn-1121.dts > target/linux/ramips/dts/mt7628an_keenetic_kn-1121.dts
 
-echo "🔍 Найден профиль устройства в файле: $REAL_DEVICE_NAME"
+# 3. Добавляем инструкции по сборке в основной Makefile прошивок mt76x8
+# Мы не заменяем файл, а дописываем в конец
+curl -sSL https://raw.githubusercontent.com/akruserg/fqaa/main/mt76x8.mk >> target/linux/ramips/image/mt76x8.mk
 
-# 4. Прописываем в Makefile
-echo "include keenetic_kn1121.mk" >> target/linux/ramips/image/Makefile
+# 4. ВАЖНО: Проверяем, как именно называется профиль в скачанном файле, 
+# чтобы точно попасть в имя для .config
+DEVICE_ID=$(grep "define Device/" target/linux/ramips/image/mt76x8.mk | tail -n 1 | cut -d'/' -f2)
+echo "Found Device ID: $DEVICE_ID"
 
-# 5. Очищаем старые записи и вписываем ПРАВИЛЬНЫЕ
-sed -i '/CONFIG_TARGET_ramips_mt76x8_DEVICE/d' .config
+# 5. Принудительно вписываем это устройство в конец .config перед сборкой
 echo "CONFIG_TARGET_ramips=y" >> .config
 echo "CONFIG_TARGET_ramips_mt76x8=y" >> .config
-echo "CONFIG_TARGET_ramips_mt76x8_DEVICE_$REAL_DEVICE_NAME=y" >> .config
-
-echo "✅ Итоговая строка для .config: CONFIG_TARGET_ramips_mt76x8_DEVICE_$REAL_DEVICE_NAME=y"
+echo "CONFIG_TARGET_ramips_mt76x8_DEVICE_$DEVICE_ID=y" >> .config
