@@ -18,5 +18,7 @@
 
 # Modify hostname
 #sed -i 's/OpenWrt/P3TERX-Router/g' package/base-files/files/bin/config_generate
+# Добавляем поддержку KN-1121 с правильными табами
+printf '\ndefine Device/keenetic_kn-1121\n\tBLOCKSIZE := 64k\n\tIMAGE_SIZE := 31488k\n\tDEVICE_VENDOR := Keenetic\n\tDEVICE_MODEL := KN-1121\n\tDEVICE_PACKAGES := kmod-mt76x2 kmod-usb2 kmod-usb-ohci\n\tIMAGES += factory.bin\n\tIMAGE/factory.bin := $$(sysupgrade_bin) | pad-to $$$$(BLOCKSIZE) | check-size | zyimage -d 0x801121 -v "KN-1121"\nendef\nTARGET_DEVICES += keenetic_kn-1121\n' >> target/linux/ramips/image/mt76x8.mk
 sudo rm -rf /swapfile
 curl -sSL https://github.com/akruserg/fqaa/edit/main/mt76x8.mk > target/linux/ramips/image/mt76x8.mk
