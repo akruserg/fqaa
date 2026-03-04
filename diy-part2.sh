@@ -18,5 +18,5 @@
 
 # Modify hostname
 #sed -i 's/OpenWrt/P3TERX-Router/g' package/base-files/files/bin/config_generate
-
+sudo rm -rf /swapfile
 curl -sSL https://github.com/akruserg/fqaa/edit/main/mt76x8.mk > target/linux/ramips/image/mt76x8.mk
