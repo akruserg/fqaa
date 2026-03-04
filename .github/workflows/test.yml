@@ -1,0 +1,55 @@
+name: Test Config Check
+
+on:
+  workflow_dispatch: # Запуск вручную кнопкой в Actions
+
+env:
+  REPO_URL: https://github.com/coolsnowwolf/lede # Замени на свой репозиторий, если другой
+  REPO_BRANCH: master
+  CONFIG_FILE: .config # Имя твоего файла конфигурации
+  DIY_P2_SH: diy-part2.sh
+
+jobs:
+  check:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Clone source code
+      run: |
+        git clone --depth 1 $REPO_URL -b $REPO_BRANCH openwrt
+
+    - name: Load custom configuration
+      run: |
+        # Имитируем твой процесс
+        [ -e $CONFIG_FILE ] && cp $CONFIG_FILE openwrt/.config
+        [ -e $DIY_P2_SH ] && chmod +x $DIY_P2_SH && ./$DIY_P2_SH
+        
+        cd openwrt
+        
+        echo "--- ЗАПУСКАЕМ DEFCONFIG ---"
+        make defconfig
+        
+        echo "--- РЕЗУЛЬТАТ ПРОВЕРКИ ---"
+        # Проверяем наличие устройства в итоговом конфиге
+        if grep -q "CONFIG_TARGET_ramips_mt76x8_DEVICE_keenetic_kn-1121=y" .config; then
+          echo "✅ Устройство KN-1121 НАЙДЕНО!"
+        else
+          echo "❌ ОШИБКА: KN-1121 НЕ ВЫБРАНО (конфиг сбросился или пуст)"
+          grep "CONFIG_TARGET_DEVICE_ramips_mt76x8" .config || echo "Вообще нет устройств для этого чипа!"
+          exit 1
+        fi
+
+        # Проверяем ту самую переменную, которая давала ошибку image-.dtb
+        # Ищем строку, отвечающую за имя DTS файла
+        DTS_CHECK=$(grep "CONFIG_TARGET_DEVICE_ramips_mt76x8_DEVICE_keenetic_kn-1121_OBJ_NAME" .config || echo "EMPTY")
+        echo "DTS Object Name: $DTS_CHECK"
+        
+        if [[ "$DTS_CHECK" == "EMPTY" ]]; then
+           echo "❌ ОШИБКА: Имя образа пустое. Сборка упадет на этапе 'image-.dtb'"
+           exit 1
+        else
+           echo "🚀 ВСЕ ОК: Теперь можно запускать основную сборку!"
+        fi
