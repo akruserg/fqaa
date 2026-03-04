@@ -1,23 +1,20 @@
-#!/bin/bash
-#
-# https://github.com/P3TERX/Actions-OpenWrt
-# File name: diy-part2.sh
-# Description: OpenWrt DIY script part 2 (After Update feeds)
-#
-# Copyright (c) 2019-2024 P3TERX <https://p3terx.com>
-#
-# This is free software, licensed under the MIT License.
-# See /LICENSE for more information.
-#
+# 1. Проверяем, где мы находимся (для логов)
+echo "Current directory: $(pwd)"
 
-# Modify default IP
-#sed -i 's/192.168.1.1/192.168.50.5/g' package/base-files/files/bin/config_generate
+# 2. Путь, куда ДОЛЖЕН попасть файл (относительно корня openwrt)
+TARGET_PATH="target/linux/ramips/image"
 
-# Modify default theme
-#sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' feeds/luci/collections/luci/Makefile
+# 3. Создаем дерево папок, если его нет (флаг -p не выдаст ошибку, если папка есть)
+mkdir -p "$TARGET_PATH"
 
-# Modify hostname
-#sed -i 's/OpenWrt/P3TERX-Router/g' package/base-files/files/bin/config_generate
-# Добавляем поддержку KN-1121 с правильными табами
-sudo rm -rf /swapfile
-curl -sSL https://raw.githubusercontent.com/akruserg/fqaa/main/mt76x8.mk > target/linux/ramips/image/mt76x8.mk
+# 4. Качаем файл именно туда
+echo "Downloading mt76x8.mk to $TARGET_PATH..."
+curl -sSL https://raw.githubusercontent.com/akruserg/fqaa/main/mt76x8.mk > "$TARGET_PATH/mt76x8.mk"
+
+# 5. Проверка: скачался ли файл?
+if [ -f "$TARGET_PATH/mt76x8.mk" ]; then
+    echo "✅ Файл успешно размещен в $TARGET_PATH"
+else
+    echo "❌ ОШИБКА: Не удалось создать файл в $TARGET_PATH"
+    exit 1
+fi
