@@ -1,20 +1,17 @@
-# 1. Проверяем, где мы находимся (для логов)
-echo "Current directory: $(pwd)"
+# 1. Создаем папку (на всякий случай)
+mkdir -p target/linux/ramips/image/
 
-# 2. Путь, куда ДОЛЖЕН попасть файл (относительно корня openwrt)
-TARGET_PATH="target/linux/ramips/image"
+# 2. Качаем файл поддержки KN-1121
+curl -sSL https://raw.githubusercontent.com/akruserg/fqaa/main/mt76x8.mk > target/linux/ramips/image/keenetic_kn1121.mk
 
-# 3. Создаем дерево папок, если его нет (флаг -p не выдаст ошибку, если папка есть)
-mkdir -p "$TARGET_PATH"
+# 3. КРИТИЧЕСКИЙ ШАГ: Прописываем наш файл в главный Makefile
+# Мы говорим системе: "Включи содержимое нашего файла в общую сборку"
+echo 'include keenetic_kn1121.mk' >> target/linux/ramips/image/Makefile
 
-# 4. Качаем файл именно туда
-echo "Downloading mt76x8.mk to $TARGET_PATH..."
-curl -sSL https://raw.githubusercontent.com/akruserg/fqaa/main/mt76x8.mk > "$TARGET_PATH/mt76x8.mk"
+# 4. Теперь принудительно вписываем выбор устройства в .config
+# Это нужно сделать ПОСЛЕ всех скриптов, но ДО make defconfig
+echo "CONFIG_TARGET_ramips=y" >> .config
+echo "CONFIG_TARGET_ramips_mt76x8=y" >> .config
+echo "CONFIG_TARGET_ramips_mt76x8_DEVICE_keenetic_kn-1121=y" >> .config
 
-# 5. Проверка: скачался ли файл?
-if [ -f "$TARGET_PATH/mt76x8.mk" ]; then
-    echo "✅ Файл успешно размещен в $TARGET_PATH"
-else
-    echo "❌ ОШИБКА: Не удалось создать файл в $TARGET_PATH"
-    exit 1
-fi
+echo "✅ Поддержка KN-1121 добавлена и активирована."
