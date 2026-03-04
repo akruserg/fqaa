@@ -1,0 +1,18 @@
+- name: Load custom configuration
+      run: |
+        [ -e files ] && mv files openwrt/files
+        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
+        chmod +x $DIY_P2_SH
+        cd openwrt
+        $GITHUB_WORKSPACE/$DIY_P2_SH
+        
+        # 1. Применяем конфиг и заполняем зависимости
+        make defconfig
+        
+        # 2. ПРОВЕРКА (Debug): Выведем, видит ли система твое устройство
+        echo "Checking if KN-1121 is selected..."
+        grep "CONFIG_TARGET_ramips_mt76x8_DEVICE_keenetic_kn-1121=y" .config || (echo "ERROR: KN-1121 NOT FOUND IN CONFIG!" && exit 1)
+        
+        # 3. Проверяем, определился ли DTS файл (то самое пустое место в твоем логе)
+        # Если эта команда ничего не выведет, значит опять будет ошибка "image-.dtb"
+        grep "CONFIG_TARGET_DEVICE_ramips_mt76x8_DEVICE_keenetic_kn-1121_OBJ_NAME" .config || echo "Warning: OBJ_NAME not set, check your device tree scripts."
