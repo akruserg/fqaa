@@ -19,7 +19,6 @@ define Device/keenetic_kn-1121
 	DEVICE_MODEL := KN-1121
 	DEVICE_PACKAGES := kmod-mt76x2 kmod-usb2 kmod-usb-ohci
 	IMAGES += factory.bin
-	IMAGE/factory.bin := $$(sysupgrade_bin) | pad-to $$$$(BLOCKSIZE) | \
-		check-size | zyimage -d 0x801121 -v "KN-1121"
+	IMAGE/factory.bin := $$(sysupgrade_bin) | pad-to $$$$(BLOCKSIZE) | check-size | zyimage -d 0x801121 -v "KN-1121"
 endef
 TARGET_DEVICES += keenetic_kn-1121
